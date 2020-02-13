@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="shortcut icon" href="favicon.ico" />
+
+    <title>WP On Cloud - DigitalOcean Deployment</title>
+
+    <style>
+        body {
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+        img {
+            border: 1px solid #ddd;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        code {
+            background-color: #f0f0f0;
+            padding: 3px;
+            scroll-padding-right: 3px;
+            border-radius: 5px;
+            font-size: 9pt;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        p {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <p><b>Welcome!</b> This file will help you go through the appropriate steps in order to setup the infrastructure, deploy the WP files and expose your app to public. Make sure you have installed all the tools mentioned in the Readme file.</i></p>
+    <p>Sections should be followed in the given order.</p>
+    <ol>
+        <li><a href='#sectionA'>Prepare the infrastructure.</a></li>
+        <li><a href='#sectionB'>Prepare localhost environment - Deploy.</a></li>
+        <li><a href='#sectionC'>Install WP.</a></li>
+    </ol>
+    <br/><br/>
+
+    <h1><a id="sectionA">1. Prepare the infrastructure.</a></h1>
+    <ul>
+        <li><a href='#sectionA1'>Create a project.</a></li>
+        <li><a href='#sectionA2'>Create a managed Kubernetes cluster.</a></li>
+        <li><a href='#sectionA3'>Create a managed MySQL cluster.</a></li>
+        <li><a href='#sectionA4'>Connect to Kubernetes cluster.</a></li>
+    </ul>
+    <a id='sectionA1'><h3>Create a project.</h3></a>
+    <p>First you need to create a Digital Ocean account. By the time this file was written, Digital Ocean was giving for free $100.00 credits for a 60days period.</p>
+    <p>Once your account is created and validated, log in, and follow the steps below to setup the required infrastructure.</p>
+    <br/>
+    <p><b>Step 1:</b></p>
+    <img src='./img/stepA1.png'/>
+    <p><b>Step 2:</b></p>
+    <img src='./img/stepA2.png'/>
+    <hr/>
+    <a id='sectionA2'><h3>Create a managed Kubernetes cluster.</h3></a>
+    <p>Follow to the steps below to create a managed Kubernetes cluster on Digital Ocean.</p>
+    <br/>
+    <p><b>Step 1: Create the Kubernetes cluster.</b></p>
+    <img src='./img/stepB1.png'/>
+    <p><b>Step 2: Add the cluster resources to a project.</b></p>
+    <img src='./img/stepB2.png'/><br/>
+    <img src='./img/stepB3.png'/><br/>
+    <hr/>
+    <a id='sectionA3'><h3>Create a managed MySQL cluster.</h3></a>
+    <p>Follow to the steps below to create a MySQL managed cluster on Digital Ocean.</p>
+    <br/>
+    <p><b>Step 1: Create the database cluster.</b> You could add provisional access only to your Kubernetes cluster created earlier to increase the security of your installation and restrict external access to your DB. In case SSL access is activated read the details below for extra steps that might need to take place.</p>
+    <img src='./img/stepB1.png'/>
+    <p><b>Step 2: Access details.</b></p>
+    <p>While creating the cluster, you will be provided with information about accessing your DB cluster (username, password, etc.). Copy this info as it will be used later for WP installation.</p>
+    <p><b>Handle SSL Access:</b> First you need to download the CA Certificate from the Digital Ocean managed DB dashboard.</p>
+    <hr/>
+    <a id='sectionA4'><h3>Connect to Kubernetes cluster.</h3></a>
+    <p>Follow to the steps below to connect your localhost to the Digital Ocean Kubernetes cluster via CLI.</p>
+    <br/>
+    <p><b>Step 1: View all the deployed Kubernetes clusters and click the one you wish to manage (open the dashboard).</b></p>
+    <img src='./img/stepC1.png'/>
+    <p><b>Step 2: Download the config file (*.yaml). It contains the access info.</b></p>
+    <img src='./img/stepC2.png'/>
+    <p><b>Step 3: Move the downloaded file to your working directory.</b></p>
+    <p><b>Step 4: Execute the command: <code>kubectl config get-contexts --kubeconfig="fullpath-to-downloaded-config-file.yaml"</code></b></p>
+    <img src='./img/stepC3.png'/>
+    <p>Example of output (* marks the default cluster).</p>
+    <br/><br/>
+    <hr/>
+
+    <br/><br/>
+    <h1><a id='sectionB'>2. Prepare localhost environment - Deploy.</a></h1>
+    <p>
+        <b>IMPORTANT:</b> We assume that Docker is localy installed. Some basic Docker knowledge is required. Check this <a href="https://www.youtube.com/watch?v=YFl2mCHdv24" target="_blank">video</a> for a quick intro about Docker.
+        <br/>A Docker Hub account is also need to host the image we are going to build here. Visit <a href="https://hub.docker.com/" target="=_blank">https://hub.docker.com/</a> to create your Docker Hub account.
+        <br/>A repository named <b>wp-on-cloud</b> (all lowercase) is also assumed that is already created in your Docker Hub. Login at <a href="https://hub.docker.com/" target="=_blank">https://hub.docker.com/</a> to create it from your dashboard.
+    </p>
+    <ul>
+        <li><a href='#sectionB1'>Create the Dockerfile & build the Docker image.</a></li>
+        <li><a href='#sectionB2'>Link your Docker Hub account.</a></li>
+        <li><a href='#sectionB3'>Deploy docker image on the Kubernetes cluster.</a></li>
+    </ul>
+    <a id='sectionB1'><h3>Create the Dockerfile & build the Docker image.</h3></a>
+    <p><b>Dockerfile</b> contains all the required information to build the Docker image. Below you describe the structure of the Dockerfile we need in order to build the required Docker image to host our WP installation, i.e. our Apache webserver and PHP. We used the Docker official deployment of [https://hub.docker.com/_/php/](PHP).</p>
+    <p><b>IMPORTANT:</b> Make sure the name of the file is exactly like this: <i><b>D</b>ockerfile</i> - Pay attention to capital <b>D</b>.</p>
+    <p><b>Step 1:</b> Create the Dockerfile (already created - see the comments inside the file for details) and the docker-compose.yml (file already created).</p>
+    <p>
+        <b>Step 2:</b> Build the Docker image: <code>docker build -t {USERNAME}/wp-on-cloud .</code>
+        <br/>
+        where {USERNAME} is your Docker Hub username.
+    </p>
+    <p><b>Step 3 (optional):</b> Run the image: <code>docker run -p 80:80 {USERNAME}/wp-on-cloud</code>. Then navigate to localhost on your favorite browser. If all is setup correctly then, the default WP installation page will popup.</p>
+    <p><b>Step 4:</b> Connect to your Docker Hub account: <code>docker login</code></p>
+    <p>
+        <b>Step 5:</b> Push to your Docker Hub account: <code>docker push {USERNAME}/wp-on-cloud</code>
+        <br/>
+        <br/>
+        where {USERNAME} is your Docker Hub username.
+    </p>
+    <hr/>    
+    <a id='sectionB2'><h3>Link your Docker Hub account.</h3></a>
+    <p><b>Step 1:</b> Have your username, email and password for your Docker Hub account.</p>
+    <p><b>Step 2:</b> Create a namespace for the installation (name it <i>wp-on-cloud</i>): <code>kubectl create namespace wp-on-cloud --kubeconfig="..full path to kubernetes config file.."</code>. Check previous section about the yaml file</p>    
+    <p>
+        <b>Step 3:</b> Run: <code>kubectl --kubeconfig="fullpath-to-downloaded-config-file.yaml" create secret docker-registry docker-hub-cred --docker-server="https://index.docker.io/v1/" --docker-username="{USERNAME}" --docker-password="{PASSWORD}" --docker-email="{USEREMAIL}" -n wp-on-cloud</code>
+        <br/><br/>
+        where:<br/>
+        <ol>
+            <li><b>{USERNAME}</b> is your Docker Hub username.</li>
+            <li><b>{USERPASSWORD}</b> is your Docker Hub password.</li>
+            <li><b>{USEREMAIL}</b> is your Docker Hub email.</li>
+        </ol>
+        <br/>
+        Once command is executed, a resource of type <i>Secret</i> will be created on your Kubernetes cluster with name <b>docker-hub-cred</b>.
+        <p style="color: red;">IMPORTANT: DO NOT CHANGE THE SECRET REGISTRY NAME AS IS USED IN THE YAML FILES FOR CONFIGURING THE KUBERNETES CLUSTER.</p>
+        <p>To delete the Secret run: <code>kubectl --kubeconfig="fullpath-to-downloaded-config-file.yaml" -n wp-on-cloud delete secret docker-hub-cred</code></p>
+    </p>
+    <p>More info at: <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line" target="_blank">https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line</a></p>
+    <hr/>    
+    <a id='sectionB3'><h3>Deploy docker image on the Kubernetes cluster.</h3></a>
+    <p>The <i>kubernetes.yaml</i> file holds all the Kubernetes cluster configuration & deployment (load balancer, storage, etc.)</p>
+    <p><b>Step 1:</b> Deploy to Kubernetes cluster: <code>kubectl apply -n wp-on-cloud -f kubernetes.yaml --kubeconfig="..full path to kubernetes config file.."</code>.</p>
+    <p><b>Step 2:</b> Validate: <code>kubectl describe svc wordpress -n wp-on-cloud --kubeconfig="..full path to kubernetes config file.."</code>. If the app was correctly deployed the output will be similar to the following:<br/>
+    <img src='img/stepD1.png'/></p>
+    <p style="color: red;">
+        <b>IMPORTANT:</b> I had an issue running the <i>apply</i> command twice in order to redeploy. I had to delete the created resources first. To do so I run: <code>kubectl <b>delete</b> -n wp-on-cloud -f kubernetes.yaml --kubeconfig="..full path to kubernetes config file.."</code>
+        which is similar to command of Step 2, except that <i>apply</i> is replaced with <i>delete</i>.
+    </p>
+    <p><b>Step 3:</b> Verify pods are deployed <code>kubectl get pod -n wp-on-cloud --kubeconfig="..full path to kubernetes config file.."</code>. If the app was correctly deployed the output will be similar to the following:<br/><img src='img/stepD2.png'/></p>
+    <hr/>
+
+    <br/><br/>
+    <h1><a id='sectionC'>3. Install WP</a></h1>
+    <p>Once the infrastructure is set (Kubernetes & DB clusters) we are ready to install WP and parametrize the installation.</p>
+    <ul>
+        <li><a href='#sectionC1'>Install WP.</a></li>
+        <li><a href='#sectionC2'>Parametrize WP.</a></li>
+    </ul>    
+    <a id='sectionC1'><h3>Install WP.</h3></a>
+    <p><b>Make sure you run the installation on the online domain in order to keep the online data in the DB.</b></p>
+    <p>Once WP is uploaded and the domain is visited for the first time, the installation of WP will start. Accessing information for the MySQL cluster (see previous section) will be used here.</p>
+    <br/>
+    <p>
+        <b>Step 1:</b> Visit your domain. To get your public cluster IP run: <code>kubectl get services -n wp-on-cloud --kubeconfig="..full path to kubernetes config file.."</code><br/>
+        Once executed, you will see an output like this:<br/>
+        <img src='img/stepE1.png'/>
+        <br/><br/>The IP address xxx.xxx.xxx.xxx under the EXTERNAL-IP column is the IP of your deployed cluster to access the WP installation.
+    </p>
+    
+    <p><b>Step 2:</b> Follow the WP installation instructions.</p>
+    <hr/>
+</body>
+</html>
